@@ -57,7 +57,7 @@ def narrate(paras):
     SR = 24000
     parts, starts, pos = [np.zeros(int(SR * 0.3), dtype=np.float32)], [], 0.3
     for p in paras:
-        a, _ = k.create(speak(p), voice="bf_emma", speed=1.0, lang="en-gb")
+        a, _ = k.create(speak(p), voice="bm_daniel", speed=0.95, lang="en-gb")
         starts.append(round(pos, 2)); parts.append(a.astype(np.float32)); pos += len(a) / SR
         parts.append(np.zeros(int(SR * 0.5), dtype=np.float32)); pos += 0.5
     pcm = (np.clip(np.concatenate(parts), -1, 1) * 32767).astype(np.int16).tobytes()
