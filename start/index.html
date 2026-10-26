@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Start</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#eef1f6; --raise:#ffffff; --ink:#14203d; --muted:#5b6680; --line:#d7dce7;
+  --accent:#f29a12; --accent-ink:#1b1404; --accent-soft:#fff1da; --ok:#1f8a5b; --wait:#b4690e;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --ground:#0f1830; --raise:#17244a; --ink:#eef2ff; --muted:#a6b1cf; --line:#2a3a6a; --accent:#f5a623; --accent-soft:#3a2c12; --ok:#4cc38a; --wait:#f2b84a; }
+}
+:root[data-theme="dark"]{ --ground:#0f1830; --raise:#17244a; --ink:#eef2ff; --muted:#a6b1cf; --line:#2a3a6a; --accent:#f5a623; --accent-soft:#3a2c12; --ok:#4cc38a; --wait:#f2b84a; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--ground);color:var(--ink);font:18px/1.45 "Atkinson Hyperlegible Next",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:22px 16px 64px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.date{font-size:15px;color:var(--muted)}
+.top-right{display:flex;gap:10px;align-items:center}
+.today{margin:26px 0 8px;font-size:clamp(26px,4vw,38px);line-height:1.15;font-weight:700;letter-spacing:-.01em;max-width:30ch}
+.today a{color:inherit;text-decoration-skip-ink:none;text-decoration-color:var(--accent);text-decoration-thickness:3px;text-underline-offset:5px}
+.sub{color:var(--muted);margin:0 0 22px;font-size:17px}
+form.search{display:flex;gap:8px;margin:0 0 34px;max-width:640px}
+form.search input{flex:1;min-width:0;font:inherit;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--raise);color:var(--ink)}
+form.search input:focus{outline:3px solid var(--accent);outline-offset:1px;border-color:transparent}
+form.search button{font:inherit;font-weight:600;padding:0 18px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+section{margin:0 0 30px}
+h2{font-size:15px;font-weight:600;color:var(--muted);margin:0 0 10px}
+.grid{display:grid;grid-auto-rows:1fr;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.tile{position:relative;display:grid;grid-template-columns:40px 1fr;gap:4px 12px;align-content:start;min-height:118px;padding:16px;border-radius:14px;background:var(--raise);border:1px solid var(--line);color:inherit;text-decoration:none;transition:border-color .12s,background-color .12s}
+.tile:hover,.tile:focus-visible{border-color:var(--accent);background:linear-gradient(var(--accent-soft),var(--accent-soft)) padding-box;outline:none}
+.tile:focus-visible{box-shadow:0 0 0 3px var(--accent)}
+.ic{grid-row:span 3;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--ground);color:var(--ink)}
+.tile:hover .ic,.tile:focus-visible .ic{background:var(--accent);color:var(--accent-ink)}
+.ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.name{font-weight:700;font-size:18px;line-height:1.25}
+.what{font-size:15px;color:var(--muted);line-height:1.35}
+.more{display:none;font-size:14px;color:var(--ink);line-height:1.35}
+.tile:hover .what,.tile:focus-visible .what{display:none}
+.tile:hover .more,.tile:focus-visible .more{display:block}
+.st{font-size:14px;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:6px}
+.st::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
+.st.ok{color:var(--ok)} .st.wait{color:var(--wait)}
+.tile.next{opacity:.5;pointer-events:none;border-style:dashed}
+.tile.next .tag{font-size:13px;color:var(--muted)}
+footer{font-size:14px;color:var(--muted);margin-top:40px}
+footer a{color:inherit}
+@media (max-width:560px){ body{font-size:17px} .grid{grid-template-columns:1fr} .tile{min-height:0} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="date" id="date"></div>
+    <div class="top-right"></div>
+  </header>
+  <p class="today" id="today">Good to see you.</p>
+  <p class="sub" id="sub"></p>
+  <form class="search" action="https://www.google.com/search" method="get" role="search">
+    <input name="q" type="search" placeholder="Search the web" aria-label="Search the web" autocomplete="off">
+    <button type="submit">Search</button>
+  </form>
+  <main id="sections"></main>
+  <footer>Your start page. Tiles change on request: use Comment, tap a tile and write what you need.</footer>
+</div>
+<script>
+(function(){
+const I = {
+  learn:'<path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M7 10v5c0 1.5 2.5 3 5 3s5-1.5 5-3v-5"/>',
+  brief:'<path d="M9 5v14"/><path d="M5 9a4 4 0 0 0 4 4"/><path d="M15 8c1.5 1 1.5 7 0 8"/><path d="M18 6c3 2.5 3 9.5 0 12"/>',
+  map:'<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.3 7l7.4.8M16.6 10l-5 6M7 8.4l2 7.2"/>',
+  check:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/>',
+  doc:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 12h5M10 16h5"/>',
+  note:'<path d="M5 4h14v16H5z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  vault:'<rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M12 9v-1M15 12h1"/>',
+  chat:'<path d="M5 5h14v10H10l-4 4v-4H5z"/>',
+  code:'<path d="M9 8l-4 4 4 4M15 8l4 4-4 4"/>',
+  mail:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 8l9 6 9-6"/>',
+  cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  next:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>'
+};
+const SECTIONS = [
+  { title: "Learn", tiles: [
+    { id: "academy", name: "Academy", icon: "learn", url: "https://jmseidel2.github.io/Practice/", what: "Your daily 30 minute session.", more: "Maths, logic, code and judgement in short daily sessions. Pick 15, 20, 30 or 45 minutes at the start." },
+    { id: "brief", name: "Daily brief", icon: "brief", url: "https://jmseidel2.github.io/Practice/#brief", what: "Five minutes of news, to listen.", more: "AI, data and standards news of the last day, read by Daniel. Opens inside the Academy." },
+    { id: "cxf", name: "Catena-X Fluency", icon: "map", url: "https://jmseidel2.github.io/Catena-X/", what: "Field guide to the standards.", more: "20 modules, one lesson at a time, with audio and a check at the end of each module." }
+  ]},
+  { title: "Work", tiles: [
+    { id: "stdlib", name: "Standard library", icon: "doc", url: "https://catenax-ev.github.io/docs/standards/overview", what: "Released Catena-X standards.", more: "The public library of released standards, by release." },
+    { id: "review", name: "Review tool", icon: "check", url: "https://jmseidel2.github.io/product-standardization-review/tc4s-review-ui.html", what: "Check issues and pull requests.", more: "Current version: checks QG1 issues and QG2 pull requests against the quality gate rules." },
+    { id: "review2", name: "Review tool v2", icon: "next", next: true, what: "Up next.", more: "The rebuild with GitHub login and one simple review flow." },
+    { id: "vault", name: "Vault Workspace", icon: "vault", url: "obsidian://open?vault=Vault-Workspace", what: "Your work notes in Obsidian.", more: "Opens the Obsidian app on this computer. The source of truth for work." }
+  ]},
+  { title: "Every day", tiles: [
+    { id: "claude", name: "Claude", icon: "chat", url: "https://claude.ai/", what: "Chats, projects and tasks.", more: "Opens Claude. Your study notes and scheduled tasks live there too." },
+    { id: "github", name: "GitHub", icon: "code", url: "https://github.com/jmseidel2", what: "Your repositories.", more: "Your own repositories, including the private notes where feedback lands." },
+    { id: "notes", name: "Feedback and notes", icon: "note", url: "https://github.com/jmseidel2/Practice-notes/tree/main/feedback", what: "What you sent from Comment mode.", more: "Every comment you sent from the apps, as files in your private notes repository." },
+    { id: "mail", name: "Gmail", icon: "mail", url: "https://mail.google.com/", what: "Private mail.", more: "Opens Gmail." },
+    { id: "cal", name: "Calendar", icon: "cal", url: "https://calendar.google.com/", what: "Private calendar.", more: "Opens Google Calendar." }
+  ]}
+];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const read = k => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
+const pad = n => String(n).padStart(2, "0");
+const now = new Date(); const day = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+const streak = days => { const s = new Set(days || []); let d = new Date(now), n = 0; const k = x => x.getFullYear() + "-" + pad(x.getMonth() + 1) + "-" + pad(x.getDate()); if (!s.has(k(d))) d.setDate(d.getDate() - 1); while (s.has(k(d))) { n++; d.setDate(d.getDate() - 1); } return n; };
+
+/* Status comes from what the apps saved in this browser (same site, nothing leaves the browser). */
+const A = read("acad-state-v1"), F = read("cxf-progress-v1");
+const status = {};
+let headline = "", sub = "";
+if (A) {
+  const s = A.ses && A.ses[day]; const n = streak(A.days);
+  if (s && s.end) { status.academy = ["ok", "Done for today"]; headline = "Today's session is done."; }
+  else if (s && s.start) { status.academy = ["wait", "Started, not finished"]; headline = '<a href="https://jmseidel2.github.io/Practice/">Finish today\'s session</a>.'; }
+  else { status.academy = ["wait", "Today's session is waiting"]; headline = '<a href="https://jmseidel2.github.io/Practice/">Start today\'s session</a>, it takes 15 minutes or more.'; }
+  if (n) sub = n + (n === 1 ? " day" : " days") + " in a row in the Academy.";
+}
+if (F) {
+  const passed = Object.values(F.checks || {}).filter(c => c && c.passedAt).length;
+  status.cxf = [passed ? "ok" : "wait", passed + " of 20 modules passed"];
+}
+let unsent = 0; try { unsent = (JSON.parse(localStorage.getItem("fb-log-v1") || "[]") || []).filter(x => !x.sent).length; } catch (e) {}
+if (unsent) status.notes = ["wait", unsent + (unsent === 1 ? " comment" : " comments") + " not sent yet"];
+
+document.getElementById("date").textContent = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+if (headline) document.getElementById("today").innerHTML = headline;
+else document.getElementById("today").innerHTML = '<a href="https://jmseidel2.github.io/Practice/">Open the Academy</a> to start today\'s session.';
+document.getElementById("sub").textContent = sub;
+
+document.getElementById("sections").innerHTML = SECTIONS.map(sec => '<section><h2>' + esc(sec.title) + '</h2><div class="grid">' + sec.tiles.map(t => {
+  const st = status[t.id];
+  const inner = '<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24">' + I[t.icon] + '</svg></span><span class="name">' + esc(t.name) + '</span><span class="what">' + esc(t.what) + '</span><span class="more">' + esc(t.more) + '</span>' + (st ? '<span class="st ' + st[0] + '">' + esc(st[1]) + '</span>' : "");
+  return t.next ? '<div class="tile next" aria-disabled="true" title="' + esc(t.more) + '">' + inner + '</div>' : '<a class="tile" href="' + esc(t.url) + '" title="' + esc(t.more) + '">' + inner + '</a>';
+}).join("") + '</div></section>').join("");
+
+window.FB_APP = { name: "start", label: "Start page with tiles to my tools", context: el => { const t = el.closest(".tile"); return t ? "Tile: " + (t.querySelector(".name") || {}).textContent : "Start page"; } };
+})();
+</script>
+<script>
+/* ---------- Comment mode: point at anything, ask or leave feedback ----------
+   Shared by the Academy and the Field Guide (same origin, so one log for both).
+   Each app sets window.FB_APP = { name, label, context(el) } before this runs.
+   Entries are kept in localStorage "fb-log-v1" and sent as one JSON file to the private repository. */
+(function(){
+  const KEY = "fb-log-v1", REPO = "jmseidel2/practice-notes";
+  const APP = () => window.FB_APP || { name: "app", label: "App", context: () => "" };
+  const KINDS = [["question", "Question"], ["unclear", "Not clear"], ["idea", "Idea to improve"], ["wrong", "Something is wrong"]];
+  const load = () => { try { const v = JSON.parse(localStorage.getItem(KEY) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+  const store = list => { try { localStorage.setItem(KEY, JSON.stringify(list.slice(-400))); } catch (e) {} };
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const TARGETS = "p,li,h1,h2,h3,h4,figure,svg,table,tr,pre,blockquote,.opt,.word,.stat,.fstep,.bitem,.tile-g,.ptile,.card,.expert,.note,.flash,.q,.lesson-head,.modrow,.term,img,button,a,label,summary";
+  let on = false, cur = null, pop = null;
+
+  const css = `
+  .fbtog{font:inherit;font-size:13px;padding:5px 12px;border-radius:999px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;opacity:.9}
+  .fbtog.on{background:#f2b84a;border-color:#f2b84a;color:#1b1404;opacity:1}
+  body.fb-on *{cursor:crosshair !important}
+  .fb-hl{outline:3px solid #f2b84a !important;outline-offset:3px;border-radius:4px}
+  .fb-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);z-index:9999;background:#132150;color:#eef2ff;border-radius:999px;padding:8px 10px 8px 16px;display:flex;gap:10px;align-items:center;font:14px/1.3 system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:calc(100vw - 24px);flex-wrap:wrap}
+  .fb-bar button{font:inherit;font-size:13px;border-radius:999px;padding:5px 12px;border:1px solid rgba(255,255,255,.35);background:transparent;color:inherit;cursor:pointer}
+  .fb-bar button.pri{background:#f2b84a;border-color:#f2b84a;color:#1b1404;font-weight:700}
+  .fb-pop{position:absolute;z-index:10000;width:min(420px,calc(100vw - 24px));background:var(--raise,#fff);color:var(--ink,#1e1e1e);border:1px solid var(--line,#ccc);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.25);padding:14px;display:grid;gap:10px;font:15px/1.45 inherit;cursor:auto}
+  .fb-pop *{cursor:auto !important}
+  .fb-pop .snip{font-size:13px;color:var(--muted,#666);border-left:3px solid #f2b84a;padding-left:8px;max-height:4.5em;overflow:hidden}
+  .fb-pop .kinds{display:flex;flex-wrap:wrap;gap:6px}
+  .fb-pop .kinds button{font:inherit;font-size:13px;padding:4px 10px;border-radius:999px;border:1px solid var(--line,#ccc);background:transparent;color:inherit;cursor:pointer !important}
+  .fb-pop .kinds button.sel{background:#f2b84a;border-color:#f2b84a;color:#1b1404;font-weight:700}
+  .fb-pop textarea{font:inherit;width:100%;box-sizing:border-box;min-height:80px;padding:8px 10px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--ground,#fff);color:inherit;cursor:text !important}
+  .fb-pop .row{display:flex;flex-wrap:wrap;gap:8px}
+  .fb-pop .row button{font:inherit;font-size:14px;padding:7px 14px;border-radius:10px;border:1px solid var(--line,#ccc);background:transparent;color:inherit;cursor:pointer !important}
+  .fb-pop .row button.pri{background:#2f5bd6;border-color:#2f5bd6;color:#fff}
+  .fb-pop .msg{font-size:13px;color:var(--muted,#666)}
+  .fb-list{display:grid;gap:6px;max-height:40vh;overflow:auto;font-size:13px}
+  .fb-list div{border-top:1px solid var(--line,#ddd);padding-top:6px}`;
+
+  function snippet(el){
+    if (el.closest("svg") || el.tagName === "IMG" || el.tagName === "FIGURE") { const t = (el.getAttribute && (el.getAttribute("aria-label") || el.getAttribute("alt"))) || (el.closest("figure") && el.closest("figure").textContent) || "a picture"; return ("Picture: " + t).replace(/\s+/g, " ").trim().slice(0, 220); }
+    return (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim().slice(0, 220);
+  }
+  function where(el){ const withId = el.closest("[id]"); return (location.hash || "#") + (withId ? " #" + withId.id : ""); }
+  function target(e){ const t = e.target.closest(TARGETS); if (!t || t.closest(".fb-pop,.fb-bar,.fbtog")) return null; return t; }
+
+  function aiPrompt(kind, snip, text, ctx){
+    const app = APP();
+    return "I am learning with my personal study app (" + app.label + ") and I want to understand one thing better.\n\n" + (ctx ? "Where I am: " + ctx + "\n\n" : "") +
+      "The part I am pointing at:\n\"" + snip + "\"\n\n" + (kind === "unclear" ? "This part is not clear to me." : "My question:") + " " + (text || "") +
+      "\n\nPlease answer in plain everyday English, short sentences, step by step, with a concrete example. Start with the direct answer in one sentence, then explain why. At most 250 words." +
+      (app.name === "fieldguide" ? " This is about Catena-X standards: name the standard (CX number) or document that says so when you are sure, and say clearly when you are not sure and where I should check. Do not invent clause numbers." : " If my question goes beyond this step, say in one sentence where it fits later.") +
+      " End with one short question that checks I understood.";
+  }
+  function clip(t){ try { const r = navigator.clipboard && navigator.clipboard.writeText(t); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+  function openAI(p){ clip(p); window.open(p.length <= 2400 ? "https://claude.ai/new?q=" + encodeURIComponent(p) : "https://claude.ai/new", "_blank", "noopener"); }
+
+  function closePop(){ if (pop) pop.remove(); pop = null; if (cur) cur.classList.remove("fb-hl"); cur = null; }
+  function showPop(el){
+    closePop(); cur = el; el.classList.add("fb-hl");
+    const snip = snippet(el); let kind = "question";
+    pop = document.createElement("div"); pop.className = "fb-pop"; pop.setAttribute("role", "dialog");
+    pop.innerHTML = '<div class="snip">' + esc(snip || "this element") + '</div><div class="kinds">' + KINDS.map(([k, l]) => '<button type="button" data-k="' + k + '"' + (k === kind ? ' class="sel"' : "") + '>' + l + '</button>').join("") + '</div>' +
+      '<textarea placeholder="Write your question or feedback. One thought is enough."></textarea><div class="row"><button type="button" class="pri ask">Ask AI about this</button><button type="button" class="save">Save only</button><button type="button" class="x">Cancel</button></div><p class="msg">Everything you save is collected for improving the content. The AI answer opens in Claude with this part attached.</p>';
+    document.body.appendChild(pop);
+    const r = el.getBoundingClientRect(), h = pop.offsetHeight, below = window.innerHeight - r.bottom - 80, above = r.top - 70;
+    const y = below >= h + 8 ? r.bottom + 8 : above >= h + 8 ? r.top - h - 8 : Math.max(70, window.innerHeight - h - 80);
+    const left = window.scrollX + Math.max(12, Math.min(r.left, window.innerWidth - pop.offsetWidth - 12));
+    pop.style.top = (window.scrollY + y) + "px"; pop.style.left = left + "px";
+    const ta = pop.querySelector("textarea"); ta.focus();
+    pop.querySelectorAll("[data-k]").forEach(b => b.onclick = ev => { ev.stopPropagation(); kind = b.dataset.k; pop.querySelectorAll("[data-k]").forEach(x => x.classList.toggle("sel", x === b)); pop.querySelector(".ask").hidden = !(kind === "question" || kind === "unclear"); });
+    const save = () => { const app = APP(); const list = load(); const ctx = (app.context && app.context(el)) || ""; const it = { id: Date.now().toString(36), app: app.name, kind, text: ta.value.trim(), snippet: snip, where: where(el), ctx, t: new Date().toISOString(), sent: false }; list.push(it); store(list); bar(); return it; };
+    pop.querySelector(".save").onclick = ev => { ev.stopPropagation(); if (!ta.value.trim() && kind !== "unclear") { ta.focus(); return; } save(); closePop(); };
+    pop.querySelector(".ask").onclick = ev => { ev.stopPropagation(); const it = save(); openAI(aiPrompt(kind, snip, it.text, it.ctx)); closePop(); };
+    pop.querySelector(".x").onclick = ev => { ev.stopPropagation(); closePop(); };
+  }
+
+  function sendAll(){
+    const list = load(); const open = list.filter(x => !x.sent); if (!open.length) return;
+    const now = new Date(); const stamp = now.toISOString().slice(0, 16).replace(/[:T]/g, "-");
+    const body = JSON.stringify({ v: 1, app: APP().name, sent: now.toISOString(), items: open }, null, 1);
+    const path = "feedback/" + APP().name + "-" + stamp + ".json";
+    const url = "https://github.com/" + REPO + "/new/main?filename=" + encodeURIComponent(path) + "&value=" + encodeURIComponent(body);
+    if (url.length > 7000) { clip(body); window.open("https://github.com/" + REPO + "/new/main?filename=" + encodeURIComponent(path), "_blank", "noopener"); alertBar("The text is on your clipboard: paste it into the empty file on GitHub, then commit."); }
+    else window.open(url, "_blank", "noopener");
+    list.forEach(x => { if (!x.sent) x.sent = now.toISOString(); }); store(list); bar();
+  }
+  let barEl = null, note = "";
+  function alertBar(t){ note = t; bar(); }
+  function bar(){
+    if (!on) { if (barEl) barEl.remove(); barEl = null; return; }
+    const open = load().filter(x => !x.sent).length;
+    if (!barEl) { barEl = document.createElement("div"); barEl.className = "fb-bar"; document.body.appendChild(barEl); }
+    barEl.innerHTML = '<span>' + (note ? esc(note) : "Comment mode: tap anything to ask or give feedback.") + '</span><span>' + open + ' unsent</span>' + (open ? '<button type="button" class="pri snd">Send to GitHub</button>' : "") + '<button type="button" class="done">Done</button>';
+    note = "";
+    const s = barEl.querySelector(".snd"); if (s) s.onclick = sendAll;
+    barEl.querySelector(".done").onclick = () => toggle(false);
+  }
+  function toggle(v){ on = v == null ? !on : v; document.body.classList.toggle("fb-on", on); document.querySelectorAll(".fbtog").forEach(b => { b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); }); if (!on) closePop(); bar(); }
+
+  document.addEventListener("mouseover", e => { if (!on || pop) return; const t = target(e); document.querySelectorAll(".fb-hl").forEach(x => { if (x !== t) x.classList.remove("fb-hl"); }); if (t) t.classList.add("fb-hl"); }, true);
+  document.addEventListener("click", e => {
+    if (e.target.closest(".fbtog")) { e.preventDefault(); toggle(); return; }
+    if (!on) return;
+    if (e.target.closest(".fb-pop,.fb-bar")) return;
+    const t = target(e); if (!t) return;
+    e.preventDefault(); e.stopPropagation(); showPop(t);
+  }, true);
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && on) { if (pop) closePop(); else toggle(false); } });
+
+  function mount(){
+    if (!document.getElementById("fb-style")) { const st = document.createElement("style"); st.id = "fb-style"; st.textContent = css; document.head.appendChild(st); }
+    const slot = document.querySelector(".top-right"); if (slot && !slot.querySelector(".fbtog")) slot.insertAdjacentHTML("afterbegin", '<button class="fbtog" type="button" aria-pressed="false" title="Point at anything to ask a question or give feedback">Comment</button>');
+  }
+  window.fbMount = mount; window.fbLog = load;
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount); else mount();
+  new MutationObserver(() => { const slot = document.querySelector(".top-right"); if (slot && !slot.querySelector(".fbtog")) mount(); }).observe(document.documentElement, { childList: true, subtree: true });
+})();
+
+</script>
+</body>
+</html>
